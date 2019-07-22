@@ -13,7 +13,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 
-import static java.lang.System.currentTimeMillis;
 import static java.lang.System.exit;
 
 public class TrackFetcher {
@@ -242,7 +241,7 @@ public class TrackFetcher {
             String query = "SELECT max(listened_at) FROM tracks;";
             ResultSet resultSet = statement.executeQuery(query);
             if (resultSet.next())
-                lastTime = resultSet.getDate(1);
+                lastTime = resultSet.getTimestamp(1);
             else
                 lastTime = new Date(0);
         } catch (SQLException e) {

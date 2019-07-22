@@ -10,12 +10,36 @@ import java.util.Date;
 import static java.lang.System.exit;
 
 public class Runner {
-    public static void main(String... args) {
-        Options options = generateOptions();
-        CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
-        CommandLine commandLine = null;
+    private Options options;
+    private CommandLineParser parser;
+    private HelpFormatter formatter;
+    private PostgresConnection postgresConnection;
+    private CommandLine commandLine;
+    private TrackFetcher trackFetcher;
+    private Dotenv dotenv;
 
+    public static void main(String... args) {
+        new Runner(args).run();
+    }
+
+    private Runner(String... args) {
+        options = generateOptions();
+        parser = new DefaultParser();
+        formatter = new HelpFormatter();
+        initializeCommandLine(args);
+        startPostgresConnection();
+        initializeFetcher();
+    }
+
+    private void run() {
+        trackFetcher.fetchNewTracks();
+        if (postgresConnection == null)
+            trackFetcher.dumpTracks(initializeWriter());
+        else
+            trackFetcher.insertTracks();
+    }
+
+    public void initializeCommandLine(String... args) {
         try {
             commandLine = parser.parse(options, args);
         } catch (ParseException e) {
@@ -24,25 +48,6 @@ public class Runner {
 
             exit(1);
         }
-
-
-        PrintWriter writer = parseWriter(commandLine.getOptionValue("output-file"));
-
-        PostgresConnection postgresConnection = null;
-        try {
-            postgresConnection = startPostgresConnection(commandLine.hasOption("sql"));
-        } catch (SQLException e) {
-            e.printStackTrace();
-            exit(5);
-        }
-
-        TrackFetcher fetcher = parseFetcher(commandLine.getOptionValue("last-time"), postgresConnection);
-
-        fetcher.fetchNewTracks();
-        if (postgresConnection == null)
-            fetcher.dumpTracks(writer);
-        else
-            fetcher.insertTracks();
     }
 
     private static Options generateOptions() {
@@ -63,47 +68,52 @@ public class Runner {
         return options;
     }
 
-    private static PrintWriter parseWriter(String outputFileOpt) {
-        PrintWriter writer = null;
-        if (outputFileOpt == null) {
-            writer = new PrintWriter(System.out);
-        } else {
+    private PrintWriter initializeWriter() {
+        PrintWriter printerWriter = null;
+        String outputFile = commandLine.getOptionValue("output-file");
+
+        if (outputFile == null)
+            printerWriter = new PrintWriter(System.out);
+        else {
             try {
-                writer = new PrintWriter(new File(outputFileOpt));
+                printerWriter = new PrintWriter(new File(outputFile));
             } catch (IOException e) {
                 e.printStackTrace();
                 exit(2);
             }
         }
-        return writer;
+        return printerWriter;
     }
 
-    private static TrackFetcher parseFetcher(String lastTimeOpt, PostgresConnection postgresConnection) {
-        TrackFetcher fetcher;
+    private void initializeFetcher() {
         Date lastTime = null;
-        if (lastTimeOpt != null)
-            lastTime = new Date(Long.parseLong(lastTimeOpt) * 1000L);
+        String lastTimeStr = dotenv.get("last-time");
+        if (lastTimeStr != null)
+            lastTime = new Date(Long.parseLong(lastTimeStr) * 1000L);
 
         if (postgresConnection != null && lastTime != null)
-            fetcher = new TrackFetcher(postgresConnection, lastTime);
+            trackFetcher = new TrackFetcher(postgresConnection, lastTime);
         else if (postgresConnection != null)
-            fetcher = new TrackFetcher(postgresConnection);
+            trackFetcher = new TrackFetcher(postgresConnection);
         else if (lastTime != null)
-            fetcher = new TrackFetcher(lastTime);
+            trackFetcher = new TrackFetcher(lastTime);
         else
-            fetcher = new TrackFetcher();
-
-        return fetcher;
+            trackFetcher = new TrackFetcher();
     }
 
-    private static PostgresConnection startPostgresConnection(boolean sql) throws SQLException {
-        if (!sql) return null;
-        Dotenv dotenv = Dotenv.load();
+    private void startPostgresConnection() {
+        dotenv = Dotenv.load();
+        if (!commandLine.hasOption("sql")) return;
         String host = dotenv.get("DB_HOST") == null ? "localhost" : dotenv.get("DB_HOST");
         int port = dotenv.get("DB_PORT") == null ? 5432 : Integer.parseInt(dotenv.get("DB_PORT"));
-        PostgresConnection connection = new PostgresConnection(dotenv.get("DB_NAME"));
-        connection.setupCredentials(dotenv.get("DB_USER"), dotenv.get("DB_PASSWORD"));
-        connection.connectToHost(host, port);
-        return connection;
+        postgresConnection = new PostgresConnection(dotenv.get("DB_NAME"));
+        postgresConnection.setupCredentials(dotenv.get("DB_USER"), dotenv.get("DB_PASSWORD"));
+        try {
+            postgresConnection.connectToHost(host, port);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            exit(5);
+        }
     }
 }
+

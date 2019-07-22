@@ -2,7 +2,6 @@ import org.json.JSONObject;
 
 import java.sql.*;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 public class Track {
     // Variable declarations
@@ -200,14 +199,14 @@ public class Track {
         String query = "INSERT INTO \"tracks\" (\"artist\", \"album\", \"name\", \"listened_at\", \"created_at\"," +
                 "\"updated_at\", \"url\", \"image_url\") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement statement = connection.prepareStatement(query);
-        java.sql.Date current = new java.sql.Date((new Date()).getTime());
-        java.sql.Date sqlListenedAt = new java.sql.Date(listenedAt.getTime());
+        java.sql.Timestamp current = new java.sql.Timestamp((new Date()).getTime());
+        java.sql.Timestamp sqlListenedAt = new java.sql.Timestamp(listenedAt.getTime());
         statement.setString(1, artist);
         statement.setString(2, album);
         statement.setString(3, name);
-        statement.setDate(4, sqlListenedAt);
-        statement.setDate(5, current);
-        statement.setDate(6, current);
+        statement.setTimestamp(4, sqlListenedAt);
+        statement.setTimestamp(5, current);
+        statement.setTimestamp(6, current);
         statement.setString(7, url);
         statement.setString(8, imageUrl);
         return statement;
