@@ -138,6 +138,7 @@ public class TrackFetcher {
     public void dumpTracks(PrintWriter writer) {
         JSONArray tracks = new JSONArray(this.tracks.stream().map(Track::toJsonObject).toArray());
         writer.println(tracks.toString());
+        writer.close();
     }
 
     // Helpers
