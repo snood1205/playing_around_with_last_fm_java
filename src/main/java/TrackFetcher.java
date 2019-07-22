@@ -6,7 +6,10 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -69,7 +72,8 @@ public class TrackFetcher {
     }
 
     public TrackFetcher(PostgresConnection postgresConnection) {
-        this(postgresConnection, new Date(0));
+        this(postgresConnection, null);
+        selectMaxLastTime(postgresConnection);
     }
 
     /**
@@ -198,6 +202,7 @@ public class TrackFetcher {
         String imageUrl = trackObject.getJSONArray("image").getJSONObject(3).getString("#text");
         long uts = trackObject.getJSONObject("date").getLong("uts");
         Date listenedAt = new Date(uts * 1000L);
+        if (lastTime == null) lastTime = new Date(0);
         keepProcessing = listenedAt.after(lastTime);
         String name = trackObject.getString("name");
         String url = trackObject.getString("url");
@@ -225,6 +230,27 @@ public class TrackFetcher {
                 e.printStackTrace();
             }
         });
+    }
+
+    // IO Operations
+
+    public void selectMaxLastTime(PostgresConnection postgresConnection, int retryCount) {
+        try {
+            Connection connection = postgresConnection.getConnection();
+            Statement statement = connection.createStatement();
+            String query = "SELECT max(listened_at) FROM tracks;";
+            ResultSet resultSet = statement.executeQuery(query);
+            if (resultSet.next())
+                lastTime = resultSet.getDate(1);
+            else
+                lastTime = new Date(0);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void selectMaxLastTime(PostgresConnection postgresConnection) {
+        selectMaxLastTime(postgresConnection, 0);
     }
 
     // Helpers

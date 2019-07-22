@@ -227,18 +227,6 @@ public class Track {
         insertToDatabase(postgresConnection, 0);
     }
 
-//    public Date selectMaxLastTime(PostgresConnection postgresConnection, int retryCount) {
-//        try {
-//            Connection connection = postgresConnection.getConnection();
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//            return new Date(0);
-//        }
-//    }
-
-//    public Date selectMaxLastTime(PostgresConnection postgresConnection) {
-//        return selectMaxLastTime(postgresConnection, 0);
-//    }
 
     public void insertToDatabase(PostgresConnection postgresConnection, int retryCount) throws SQLException {
         Connection connection = postgresConnection.getConnection();
@@ -253,7 +241,7 @@ public class Track {
 
     public PreparedStatement prepareInsertStatement(Connection connection) throws SQLException {
         String query = "INSERT INTO \"tracks\" (\"artist\", \"album\", \"name\", \"listened_at\", \"created_at\"," +
-                "\"updated_at\", \"url\", \"image_url\") VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING \"id\"";
+                "\"updated_at\", \"url\", \"image_url\") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement statement = connection.prepareStatement(query);
         java.sql.Date current = new java.sql.Date((new Date()).getTime());
         java.sql.Date sqlListenedAt = new java.sql.Date(listenedAt.getTime());
