@@ -13,24 +13,25 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 
+import static java.lang.System.currentTimeMillis;
 import static java.lang.System.exit;
 
 public class TrackFetcher {
     /**
      * The API Key used to fetch data from the last.fm API.
      */
-    private String apiKey;
+    private final String apiKey;
 
     /**
      * The username to fetch data with from the last.fm API.
      * (The username does not need to correspond with who requested the API Key).
      */
-    private String username;
+    private final String username;
 
     /**
      * The tracks fetched via the api.
      */
-    private ArrayList<Track> tracks;
+    private final ArrayList<Track> tracks;
 
     /**
      * The date of when the most recent track was scrobbled.
@@ -42,7 +43,7 @@ public class TrackFetcher {
      */
     private boolean keepProcessing;
 
-    private PostgresConnection postgresConnection;
+    private final PostgresConnection postgresConnection;
 
     // Constructors
 
@@ -234,7 +235,7 @@ public class TrackFetcher {
 
     // IO Operations
 
-    public void selectMaxLastTime(PostgresConnection postgresConnection, int retryCount) {
+    public void selectMaxLastTime(PostgresConnection postgresConnection) {
         try {
             Connection connection = postgresConnection.getConnection();
             Statement statement = connection.createStatement();
@@ -247,10 +248,6 @@ public class TrackFetcher {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    public void selectMaxLastTime(PostgresConnection postgresConnection) {
-        selectMaxLastTime(postgresConnection, 0);
     }
 
     // Helpers

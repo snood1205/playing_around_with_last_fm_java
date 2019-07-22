@@ -7,8 +7,8 @@ import static java.lang.System.exit;
 
 public class PostgresConnection {
     private Connection connection;
-    private String databaseName;
-    private Properties properties;
+    private final String databaseName;
+    private final Properties properties;
 
     public PostgresConnection(String databaseName) {
         this.databaseName = databaseName;

@@ -1,4 +1,3 @@
-import org.jetbrains.annotations.Contract;
 import org.json.JSONObject;
 
 import java.sql.*;
@@ -10,32 +9,32 @@ public class Track {
     /**
      * The name of the artist who performs the track (for example: Parquet Courts)
      */
-    private String artist;
+    private final String artist;
 
     /**
      * The album the track is on (for example: Wide Awake!)
      */
-    private String album;
+    private final String album;
 
     /**
      * The name of the track (for example: Tenderness)
      */
-    private String name;
+    private final String name;
 
     /**
      * The time at which the track was listened to.
      */
-    private Date listenedAt;
+    private final Date listenedAt;
 
     /**
      * The link to the image on last.fm.
      */
-    private String imageUrl;
+    private final String imageUrl;
 
     /**
      * The link to the track's page on last.fm.
      */
-    private String url;
+    private final String url;
 
     // Constructors
 
@@ -58,21 +57,6 @@ public class Track {
         this.url = url;
     }
 
-    /**
-     * The full constructor for Track with Greogorian Calendar option for listenedAt
-     *
-     * @param artist     the name of the artist who performs the track (for example: Parquet Courts)
-     * @param album      the album the song is on (for example: Wide Awake!)
-     * @param name       the name of the song (for example: Tenderness)
-     * @param listenedAt the time the song was listened to
-     *                   (for example: {@code new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59);})
-     * @param imageUrl   the URL for the album art
-     * @param url        the URL for the track on last.fm
-     */
-    public Track(String artist, String album, String name, GregorianCalendar listenedAt, String imageUrl, String url) {
-        this(artist, album, name, listenedAt.getTime(), imageUrl, url);
-    }
-
     // Getters and setters
 
     /**
@@ -85,15 +69,6 @@ public class Track {
     }
 
     /**
-     * Set the artist of a song
-     *
-     * @param artist the name of the artist of the song.
-     */
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
-    /**
      * Gets the album of a song. (for example: Habit)
      *
      * @return the name of the album of the song.
@@ -103,30 +78,12 @@ public class Track {
     }
 
     /**
-     * Set the album of a song.
-     *
-     * @param album the name of the album of the song.
-     */
-    public void setAlbum(String album) {
-        this.album = album;
-    }
-
-    /**
      * Gets the name of a song. (for example: Thinning).
      *
      * @return the name of the song.
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * Sets the name of a song.
-     *
-     * @param name the name of the song.
-     */
-    public void setName(String name) {
-        this.name = name;
     }
 
     /**
