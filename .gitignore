@@ -1,3 +1,6 @@
 # Ignore IntelliJ stuff
 /.idea/
 *.iml
+
+# Ignore .env
+.env

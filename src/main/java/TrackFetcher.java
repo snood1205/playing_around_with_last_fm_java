@@ -17,6 +17,11 @@ public class TrackFetcher {
     private ArrayList<Track> tracks;
     private Date lastTime;
 
+    /**
+     * Create a new track fetcher
+     *
+     * @param lastTime only fetch songs scrobbled after this time.
+     */
     public TrackFetcher(Date lastTime) {
         Dotenv dotenv = Dotenv.load();
         this.lastTime = lastTime;
@@ -25,11 +30,18 @@ public class TrackFetcher {
         this.tracks = new ArrayList<>();
     }
 
+    /**
+     * Create a new track fetcher. Fetches all songs scrobbled after epoch.
+     */
     public TrackFetcher() {
-        // Use epoch if there is no date provided
         this(new Date(0));
     }
 
+    /**
+     * Fetch new tracks from the last.fm API.
+     *
+     * @return
+     */
     public int fetchNewTracks() {
         int totalPages = fetchTotalPages();
 
@@ -108,7 +120,7 @@ public class TrackFetcher {
             return true;
         String artist = trackObject.getJSONObject("artist").getString("#text");
         String album = trackObject.getJSONObject("album").getString("#text");
-        String imageUrl = trackObject.getJSONObject("image").getString("#text");
+        String imageUrl = trackObject.getJSONArray("image").getJSONObject(3).getString("#text");
         long uts = trackObject.getJSONObject("date").getLong("uts");
         Date listenedAt = new Date(uts * 1000L);
         String name = trackObject.getString("name");
@@ -119,6 +131,13 @@ public class TrackFetcher {
             tracks.add(track);
         }
         return keepProcessing;
+    }
+
+    // Dumpers (IO operations)
+
+    public void dumpTracks(PrintWriter writer) {
+        JSONArray tracks = new JSONArray(this.tracks.stream().map(Track::toJsonObject).toArray());
+        writer.println(tracks.toString());
     }
 
     // Helpers
@@ -141,7 +160,7 @@ public class TrackFetcher {
 
     private URL generateUrl(int pageNumber) throws MalformedURLException {
         String str = String.format(
-                "http://ws.audioscrobber.com/2.0/?method=user.getrecenttracks&user=%s&api_key=%s&format=json&page=%d",
+                "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=%s&format=json&page=%d",
                 this.username, this.apiKey, pageNumber
         );
         return new URL(str);

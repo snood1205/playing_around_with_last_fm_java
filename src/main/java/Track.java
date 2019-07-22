@@ -1,7 +1,6 @@
-import com.sun.deploy.security.SelectableSecurityManager;
+import org.json.JSONObject;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.PrintWriter;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -114,13 +113,25 @@ public class Track {
         return listenedAt;
     }
 
+    /**
+     * Gets the url of the track on last.fm.
+     *
+     * @return the url of the track on last.fm
+     */
     public String getUrl() {
         return url;
     }
 
+    /**
+     * Gets the url for the album artwork.
+     *
+     * @return the url for the album artwork.
+     */
     public String getImageUrl() {
         return imageUrl;
     }
+
+    // Equality Methods
 
     /**
      * Checks for equality.
@@ -157,12 +168,21 @@ public class Track {
      * depending upon the value provided to <code>considerAlbum.</code>
      *
      * @param track         the track to check for loose equality
-     * @param considerAlbum
-     * @return
+     * @param considerAlbum whether or not to consider the album in checking for loose equality
+     * @return whether or not the tracks are loosely equal
      */
     public boolean looseEquals(Track track, boolean considerAlbum) {
         return considerAlbum ?
                 looseEquals(track) :
                 track.getArtist().equals(artist) && track.getName().equals(name);
+    }
+
+    // Conversion methods
+    public String toJson() {
+        return toJsonObject().toString(2);
+    }
+
+    public JSONObject toJsonObject() {
+        return new JSONObject(this);
     }
 }
