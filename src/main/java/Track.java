@@ -1,6 +1,6 @@
+import org.jetbrains.annotations.Contract;
 import org.json.JSONObject;
 
-import java.io.PrintWriter;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -21,7 +21,7 @@ public class Track {
      * @param artist     the name of the artist who performs the track (e.g. Parquet Courts)
      * @param album      the album the song is on (e.g. Wide Awake!)
      * @param name       the name of the song (e.g. Tenderness)
-     * @param listenedAt the time the song was listened to (e.g. <code>new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59).getDate();</code>
+     * @param listenedAt the time the song was listened to (e.g. {@code new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59).getDate();}
      * @param imageUrl   the URL for the album art
      * @param url        the URL for the track on last.fm
      */
@@ -40,7 +40,8 @@ public class Track {
      * @param artist     the name of the artist who performs the track (e.g. Parquet Courts)
      * @param album      the album the song is on (e.g. Wide Awake!)
      * @param name       the name of the song (e.g. Tenderness)
-     * @param listenedAt the time the song was listened to (e.g. <code>new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59);code>
+     * @param listenedAt the time the song was listened to
+     *                   (e.g. {@code new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59);})
      * @param imageUrl   the URL for the album art
      * @param url        the URL for the track on last.fm
      */
@@ -165,7 +166,7 @@ public class Track {
 
     /**
      * A looser equality method. This checks if the artist and name are the same. The album is considered or not
-     * depending upon the value provided to <code>considerAlbum.</code>
+     * depending upon the value provided to {@code considerAlbum.}
      *
      * @param track         the track to check for loose equality
      * @param considerAlbum whether or not to consider the album in checking for loose equality
@@ -178,10 +179,21 @@ public class Track {
     }
 
     // Conversion methods
+
+    /**
+     * Returns the Track in a JSON format.
+     *
+     * @return a track in JSON string format
+     */
     public String toJson() {
         return toJsonObject().toString(2);
     }
 
+    /**
+     * Converts a Track to a {@link JSONObject}.
+     *
+     * @return the {@link JSONObject} form of the track.
+     */
     public JSONObject toJsonObject() {
         return new JSONObject(this);
     }

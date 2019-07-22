@@ -16,6 +16,7 @@ public class TrackFetcher {
     private String username;
     private ArrayList<Track> tracks;
     private Date lastTime;
+    private boolean keepProcessing;
 
     /**
      * Create a new track fetcher
@@ -28,6 +29,7 @@ public class TrackFetcher {
         this.apiKey = dotenv.get("API_KEY");
         this.username = dotenv.get("USERNAME");
         this.tracks = new ArrayList<>();
+        this.keepProcessing = true;
     }
 
     /**
@@ -39,23 +41,25 @@ public class TrackFetcher {
 
     /**
      * Fetch new tracks from the last.fm API.
-     *
-     * @return
      */
-    public int fetchNewTracks() {
+    public void fetchNewTracks() {
         int totalPages = fetchTotalPages();
 
         System.out.printf("Total pages fetched: %d\n", totalPages);
-        boolean keepProcessing = true;
         for (int pageNumber = 1; keepProcessing && pageNumber <= totalPages; pageNumber++) {
             JSONArray trackArray = fetchTracks(pageNumber);
-            keepProcessing = processTracks(trackArray);
+            processTracks(trackArray);
         }
-        return tracks.size();
     }
 
     // Fetchers
 
+    /**
+     * Fetches the total number of pages.
+     *
+     * @param retryCount which retry attempt this fetch attempt is on.
+     * @return the total number of pages of a user's last.fm scrobbles.
+     */
     private int fetchTotalPages(int retryCount) {
         System.out.println("fetching total pages...");
         int totalPages = 0;
@@ -77,10 +81,22 @@ public class TrackFetcher {
         return totalPages;
     }
 
+    /**
+     * Fetches the total number of pages.
+     *
+     * @return the total number of pages of a user's last.fm scrobbles.
+     */
     private int fetchTotalPages() {
         return fetchTotalPages(0);
     }
 
+    /**
+     * Fetch a page of tracks from the last.fm API.
+     *
+     * @param pageNumber the page number to fetch.
+     * @param retryCount which retry attempt this fetch attempt is on.
+     * @return an array of JSON track objects
+     */
     private JSONArray fetchTracks(int pageNumber, int retryCount) {
         JSONArray tracks = null;
         System.out.printf("Fetching page %d\n", pageNumber);
@@ -100,24 +116,36 @@ public class TrackFetcher {
         return tracks;
     }
 
+    /**
+     * Fetch a page of tracks from the last.fm API.
+     *
+     * @param pageNumber the page number to fetch.
+     * @return an array of JSON track objects
+     */
     private JSONArray fetchTracks(int pageNumber) {
         return fetchTracks(pageNumber, 0);
     }
 
     // Processors
 
-    private boolean processTracks(JSONArray trackArray) {
+    /**
+     * Processes a JSON array of tracks by appending the tracks fetched onto {@link #tracks}.
+     *
+     * @param trackArray an array of JSON track objects to parse.
+     */
+    private void processTracks(JSONArray trackArray) {
         int length = trackArray.length();
-        boolean keepProcessing = true;
-        for (int i = 0; keepProcessing && i < length; i++) {
-            keepProcessing = processAndAppendTrack(trackArray.getJSONObject(i));
-        }
-        return keepProcessing;
+        for (int i = 0; keepProcessing && i < length; i++)
+            processAndAppendTrack(trackArray.getJSONObject(i));
     }
 
-    private boolean processAndAppendTrack(JSONObject trackObject) {
-        if (!trackObject.has("date"))
-            return true;
+    /**
+     * Processes a JSON track object and append it to {@link #tracks}.
+     *
+     * @param trackObject the JSON track object to parse.
+     */
+    private void processAndAppendTrack(JSONObject trackObject) {
+        if (!trackObject.has("date")) return;
         String artist = trackObject.getJSONObject("artist").getString("#text");
         String album = trackObject.getJSONObject("album").getString("#text");
         String imageUrl = trackObject.getJSONArray("image").getJSONObject(3).getString("#text");
@@ -126,23 +154,34 @@ public class TrackFetcher {
         String name = trackObject.getString("name");
         String url = trackObject.getString("url");
         Track track = new Track(artist, album, name, listenedAt, imageUrl, url);
-        boolean keepProcessing = !listenedAt.before(lastTime);
+        keepProcessing = !listenedAt.before(lastTime);
         if (keepProcessing) {
             tracks.add(track);
         }
-        return keepProcessing;
     }
 
     // Dumpers (IO operations)
 
+    /**
+     * Dumps all of the tracks stored in {@link #tracks} in a JSON format to the provided writer.
+     *
+     * @param writer the writer to write the tracks to in JSON.
+     */
     public void dumpTracks(PrintWriter writer) {
         JSONArray tracks = new JSONArray(this.tracks.stream().map(Track::toJsonObject).toArray());
-        writer.println(tracks.toString());
+        writer.println(tracks);
         writer.close();
     }
 
     // Helpers
 
+    /**
+     * Constructs a string from a reader.
+     *
+     * @param reader the reader from which to read the string.
+     * @return the string version of the reader after being read until {@code EOF}.
+     * @throws IOException thrown if the reader can't read properly.
+     */
     private String buildString(Reader reader) throws IOException {
         StringBuilder builder = new StringBuilder();
         int chr;
@@ -150,6 +189,13 @@ public class TrackFetcher {
         return builder.toString();
     }
 
+    /**
+     * Gets a JSON object from a URL.
+     *
+     * @param url the url from which to fetch and read the JSON object.
+     * @return A JSON Object parsed from the provided endpoint.
+     * @throws IOException thrown if the url can't open a stream or if the reader can't read properly.
+     */
     private JSONObject readJsonFromUrl(URL url) throws IOException {
         // Largely adapted from:
         // https://stackoverflow.com/questions/4308554/simplest-way-to-read-json-from-a-url-in-java
