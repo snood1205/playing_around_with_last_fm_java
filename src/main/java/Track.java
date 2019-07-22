@@ -1,6 +1,7 @@
 import org.jetbrains.annotations.Contract;
 import org.json.JSONObject;
 
+import java.sql.*;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -219,5 +220,51 @@ public class Track {
      */
     public JSONObject toJsonObject() {
         return new JSONObject(this);
+    }
+
+    // SQL Methods
+    public void insertToDatabase(PostgresConnection postgresConnection) throws SQLException {
+        insertToDatabase(postgresConnection, 0);
+    }
+
+//    public Date selectMaxLastTime(PostgresConnection postgresConnection, int retryCount) {
+//        try {
+//            Connection connection = postgresConnection.getConnection();
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            return new Date(0);
+//        }
+//    }
+
+//    public Date selectMaxLastTime(PostgresConnection postgresConnection) {
+//        return selectMaxLastTime(postgresConnection, 0);
+//    }
+
+    public void insertToDatabase(PostgresConnection postgresConnection, int retryCount) throws SQLException {
+        Connection connection = postgresConnection.getConnection();
+        PreparedStatement statement = prepareInsertStatement(connection);
+        int rowCount = statement.executeUpdate();
+        statement.close();
+        if (rowCount == 0) {
+            System.out.printf("Insert retry number: %d\n", ++retryCount);
+            insertToDatabase(postgresConnection, retryCount);
+        }
+    }
+
+    public PreparedStatement prepareInsertStatement(Connection connection) throws SQLException {
+        String query = "INSERT INTO \"tracks\" (\"artist\", \"album\", \"name\", \"listened_at\", \"created_at\"," +
+                "\"updated_at\", \"url\", \"image_url\") VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING \"id\"";
+        PreparedStatement statement = connection.prepareStatement(query);
+        java.sql.Date current = new java.sql.Date((new Date()).getTime());
+        java.sql.Date sqlListenedAt = new java.sql.Date(listenedAt.getTime());
+        statement.setString(1, artist);
+        statement.setString(2, album);
+        statement.setString(3, name);
+        statement.setDate(4, sqlListenedAt);
+        statement.setDate(5, current);
+        statement.setDate(6, current);
+        statement.setString(7, url);
+        statement.setString(8, imageUrl);
+        return statement;
     }
 }

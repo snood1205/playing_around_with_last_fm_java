@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -38,18 +39,37 @@ public class TrackFetcher {
      */
     private boolean keepProcessing;
 
+    private PostgresConnection postgresConnection;
+
+    // Constructors
+
     /**
-     * Create a new track fetcher
+     * Create a new track fetcher.
      *
-     * @param lastTime only fetch songs scrobbled after this time.
+     * @param postgresConnection postgres database connection
+     * @param lastTime           only fetch songs scrobbled after this time.
      */
-    public TrackFetcher(Date lastTime) {
+    public TrackFetcher(PostgresConnection postgresConnection, Date lastTime) {
         Dotenv dotenv = Dotenv.load();
         this.lastTime = lastTime;
         this.apiKey = dotenv.get("API_KEY");
         this.username = dotenv.get("USERNAME");
         this.tracks = new ArrayList<>();
         this.keepProcessing = true;
+        this.postgresConnection = postgresConnection;
+    }
+
+    /**
+     * Create a new track fetcher
+     *
+     * @param lastTime only fetch songs scrobbled after this time.
+     */
+    public TrackFetcher(Date lastTime) {
+        this(null, lastTime);
+    }
+
+    public TrackFetcher(PostgresConnection postgresConnection) {
+        this(postgresConnection, new Date(0));
     }
 
     /**
@@ -155,6 +175,7 @@ public class TrackFetcher {
      */
     private void processTracks(JSONArray trackArray) {
         int length = trackArray.length();
+
         for (int i = 0; keepProcessing && i < length; i++)
             processAndAppendTrack(trackArray.getJSONObject(i));
     }
@@ -165,22 +186,25 @@ public class TrackFetcher {
      * @param trackObject the JSON track object to parse.
      */
     private void processAndAppendTrack(JSONObject trackObject) {
-        if (!trackObject.has("date")) return;
+        Track track = constructTrack(trackObject);
+        if (keepProcessing && track != null)
+            tracks.add(track);
+    }
+
+    private Track constructTrack(JSONObject trackObject) {
+        if (!trackObject.has("date")) return null;
         String artist = trackObject.getJSONObject("artist").getString("#text");
         String album = trackObject.getJSONObject("album").getString("#text");
         String imageUrl = trackObject.getJSONArray("image").getJSONObject(3).getString("#text");
         long uts = trackObject.getJSONObject("date").getLong("uts");
         Date listenedAt = new Date(uts * 1000L);
+        keepProcessing = listenedAt.after(lastTime);
         String name = trackObject.getString("name");
         String url = trackObject.getString("url");
-        Track track = new Track(artist, album, name, listenedAt, imageUrl, url);
-        keepProcessing = !listenedAt.before(lastTime);
-        if (keepProcessing) {
-            tracks.add(track);
-        }
+        return new Track(artist, album, name, listenedAt, imageUrl, url);
     }
 
-    // Dumpers (IO operations)
+    // IO/SQL operations
 
     /**
      * Dumps all of the tracks stored in {@link #tracks} in a JSON format to the provided writer.
@@ -191,6 +215,16 @@ public class TrackFetcher {
         JSONArray tracks = new JSONArray(this.tracks.stream().map(Track::toJsonObject).toArray());
         writer.println(tracks);
         writer.close();
+    }
+
+    public void insertTracks() {
+        tracks.forEach(track -> {
+            try {
+                track.insertToDatabase(postgresConnection);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     // Helpers
