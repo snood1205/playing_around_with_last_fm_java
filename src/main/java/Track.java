@@ -179,15 +179,30 @@ public class Track {
     }
 
     // SQL Methods
+
+    /**
+     * Insert a track into the database.
+     *
+     * @param postgresConnection the connection to the postgres database.
+     * @throws SQLException throws if there's an issue with the database.
+     */
     public void insertToDatabase(PostgresConnection postgresConnection) throws SQLException {
         insertToDatabase(postgresConnection, 0);
     }
 
 
+    /**
+     * Insert a track into the database.
+     *
+     * @param postgresConnection the connection to the postgres database.
+     * @param retryCount         which retry attempt this insert is on.
+     * @throws SQLException throws if there's an issue with the database.
+     */
     public void insertToDatabase(PostgresConnection postgresConnection, int retryCount) throws SQLException {
         Connection connection = postgresConnection.getConnection();
         PreparedStatement statement = prepareInsertStatement(connection);
         int rowCount = statement.executeUpdate();
+        System.out.printf("%d rows inserted\n", rowCount);
         statement.close();
         if (rowCount == 0) {
             System.out.printf("Insert retry number: %d\n", ++retryCount);
@@ -195,9 +210,16 @@ public class Track {
         }
     }
 
+    /**
+     * Create a insert statement ready to execute
+     *
+     * @param connection the database connection on which to prepare the SQL statement.
+     * @return a prepared insert statement from attributes on the current track.
+     * @throws SQLException throws if there's an issue preparing the insert statement.
+     */
     public PreparedStatement prepareInsertStatement(Connection connection) throws SQLException {
-        String query = "INSERT INTO \"tracks\" (\"artist\", \"album\", \"name\", \"listened_at\", \"created_at\"," +
-                "\"updated_at\", \"url\", \"image_url\") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO tracks (artist, album, name, listened_at, created_at, updated_at, url, image_url)"
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement statement = connection.prepareStatement(query);
         java.sql.Timestamp current = new java.sql.Timestamp((new Date()).getTime());
         java.sql.Timestamp sqlListenedAt = new java.sql.Timestamp(listenedAt.getTime());

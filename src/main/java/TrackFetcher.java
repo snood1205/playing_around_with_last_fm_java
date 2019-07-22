@@ -2,6 +2,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.swing.plaf.nimbus.State;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -73,7 +74,7 @@ public class TrackFetcher {
 
     public TrackFetcher(PostgresConnection postgresConnection) {
         this(postgresConnection, null);
-        selectMaxLastTime(postgresConnection);
+        selectMaxLastTime();
     }
 
     /**
@@ -114,7 +115,7 @@ public class TrackFetcher {
                     .getInt("totalPages");
         } catch (IOException e) {
             if (retryCount < 5) {
-                System.out.printf("Fetch retry number %d", ++retryCount);
+                System.out.printf("Fetch retry number %d\n", ++retryCount);
                 return fetchTotalPages(retryCount);
             } else {
                 e.printStackTrace();
@@ -149,7 +150,7 @@ public class TrackFetcher {
             tracks = obj.getJSONObject("recenttracks").getJSONArray("track");
         } catch (IOException e) {
             if (retryCount < 5) {
-                System.out.printf("Fetch retry number %d", ++retryCount);
+                System.out.printf("Fetch retry number %d\n", ++retryCount);
                 return fetchTracks(pageNumber, retryCount);
             } else {
                 e.printStackTrace();
@@ -232,9 +233,21 @@ public class TrackFetcher {
         });
     }
 
-    // IO Operations
+    public void deleteTracks() {
+        String sql = "DELETE FROM tracks";
+        Connection connection = postgresConnection.getConnection();
+        int rows = 0;
+        try {
+            Statement statement = connection.createStatement();
+            rows = statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            exit(1);
+        }
+        System.out.println(rows);
+    }
 
-    public void selectMaxLastTime(PostgresConnection postgresConnection) {
+    public void selectMaxLastTime() {
         try {
             Connection connection = postgresConnection.getConnection();
             Statement statement = connection.createStatement();

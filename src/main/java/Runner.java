@@ -23,7 +23,7 @@ public class Runner {
     }
 
     private Runner(String... args) {
-        options = generateOptions();
+        initializeOptions();
         parser = new DefaultParser();
         formatter = new HelpFormatter();
         initializeCommandLine(args);
@@ -32,11 +32,18 @@ public class Runner {
     }
 
     private void run() {
-        trackFetcher.fetchNewTracks();
-        if (postgresConnection == null)
-            trackFetcher.dumpTracks(initializeWriter());
-        else
-            trackFetcher.insertTracks();
+        if (options.hasOption("--reset")) {
+            trackFetcher.deleteTracks();
+            trackFetcher.fetchNewTracks();
+        } else if (options.hasOption("--delete")) {
+            trackFetcher.deleteTracks();
+        } else {
+            trackFetcher.fetchNewTracks();
+            if (postgresConnection == null)
+                trackFetcher.dumpTracks(initializeWriter());
+            else
+                trackFetcher.insertTracks();
+        }
     }
 
     public void initializeCommandLine(String... args) {
@@ -50,22 +57,19 @@ public class Runner {
         }
     }
 
-    private static Options generateOptions() {
-        Options options = new Options();
+    private void initializeOptions() {
+        options = new Options();
 
-        Option lastTime = new Option("l", "last-time", true, "Time track was last listened at in seconds since epoch");
-        lastTime.setRequired(false);
-        options.addOption(lastTime);
+        addOption(new Option("l", "last-time", true, "Time track was last listened at in seconds since epoch"), false);
+        addOption(new Option("o", "output-file", true, "Output File"), false);
+        addOption(new Option("s", "sql", false, "Insert to SQL instead of printing to file"), false);
+        addOption(new Option("r", "reset", false, "Clear the table"), false);
+        addOption(new Option("d", "delete", false, "Delete all tracks from table"), false);
+    }
 
-        Option outputFile = new Option("o", "output-file", true, "Output File");
-        outputFile.setRequired(false);
-        options.addOption(outputFile);
-
-        Option sql = new Option("s", "sql", false, "Insert to SQL instead of printing to file");
-        sql.setRequired(false);
-        options.addOption(sql);
-
-        return options;
+    private void addOption(Option option, boolean required) {
+        option.setRequired(required);
+        options.addOption(option);
     }
 
     private PrintWriter initializeWriter() {
@@ -103,7 +107,7 @@ public class Runner {
 
     private void startPostgresConnection() {
         dotenv = Dotenv.load();
-        if (!commandLine.hasOption("sql")) return;
+        if (!(commandLine.hasOption("sql") || commandLine.hasOption("reset"))) return;
         String host = dotenv.get("DB_HOST") == null ? "localhost" : dotenv.get("DB_HOST");
         int port = dotenv.get("DB_PORT") == null ? 5432 : Integer.parseInt(dotenv.get("DB_PORT"));
         postgresConnection = new PostgresConnection(dotenv.get("DB_NAME"));
