@@ -6,11 +6,34 @@ import java.util.GregorianCalendar;
 
 public class Track {
     // Variable declarations
+    /**
+     * The name of the artist who performs the track (for example: Parquet Courts)
+     */
     private String artist;
+
+    /**
+     * The album the track is on (for example: Wide Awake!)
+     */
     private String album;
+
+    /**
+     * The name of the track (for example: Tenderness)
+     */
     private String name;
+
+    /**
+     * The time at which the track was listened to.
+     */
     private Date listenedAt;
+
+    /**
+     * The link to the image on last.fm.
+     */
     private String imageUrl;
+
+    /**
+     * The link to the track's page on last.fm.
+     */
     private String url;
 
     // Constructors
@@ -18,10 +41,10 @@ public class Track {
     /**
      * The full constructor for Track.
      *
-     * @param artist     the name of the artist who performs the track (e.g. Parquet Courts)
-     * @param album      the album the song is on (e.g. Wide Awake!)
-     * @param name       the name of the song (e.g. Tenderness)
-     * @param listenedAt the time the song was listened to (e.g. {@code new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59).getDate();}
+     * @param artist     the name of the artist who performs the track (for example: Parquet Courts)
+     * @param album      the album the track is on (for example: Wide Awake!)
+     * @param name       the name of the song (for example: Tenderness)
+     * @param listenedAt the time the song was listened to (for example: {@code new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59).getDate();}).
      * @param imageUrl   the URL for the album art
      * @param url        the URL for the track on last.fm
      */
@@ -37,11 +60,11 @@ public class Track {
     /**
      * The full constructor for Track with Greogorian Calendar option for listenedAt
      *
-     * @param artist     the name of the artist who performs the track (e.g. Parquet Courts)
-     * @param album      the album the song is on (e.g. Wide Awake!)
-     * @param name       the name of the song (e.g. Tenderness)
+     * @param artist     the name of the artist who performs the track (for example: Parquet Courts)
+     * @param album      the album the song is on (for example: Wide Awake!)
+     * @param name       the name of the song (for example: Tenderness)
      * @param listenedAt the time the song was listened to
-     *                   (e.g. {@code new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59);})
+     *                   (for example: {@code new GregorianCalendar(2018, Calendar.DECEMBER, 31, 23, 59, 59);})
      * @param imageUrl   the URL for the album art
      * @param url        the URL for the track on last.fm
      */
@@ -52,7 +75,7 @@ public class Track {
     // Getters and setters
 
     /**
-     * Gets the artist of the song. (e.g. Snail Mail)
+     * Gets the artist of the song. (for example: Snail Mail)
      *
      * @return the name of the artist of the track.
      */
@@ -70,7 +93,7 @@ public class Track {
     }
 
     /**
-     * Gets the album of a song. (e.g. Habit)
+     * Gets the album of a song. (for example: Habit)
      *
      * @return the name of the album of the song.
      */
@@ -88,7 +111,7 @@ public class Track {
     }
 
     /**
-     * Gets the name of a song. (e.g. Thinning).
+     * Gets the name of a song. (for example: Thinning).
      *
      * @return the name of the song.
      */
